@@ -57,8 +57,25 @@ kafka:
 # otherwise the configuration ip is preferred
 serverip: 0.0.0.0
 
+# endpoints 内部组件间访问的端点host名称，访问时，可以内部直接访问 host:port 来访问
+endpoints:
+  api: openim_api
+  cmsapi: openim_cms_api
+  push: openim_push
+  msg_gateway: openim_msg_gateway
+  rpc_auth: openim_rpc_auth
+  rpc_friend: openim_rpc_friend
+  rpc_group: openim_rpc_group
+  rpc_msg: openim_rpc_msg
+  rpc_user: openim_rpc_user
+  rpc_statistic: openim_rpc_statistic
+  rpc_admin_cms: openim_rpc_admin_cms
+  rpc_message_cms: openim_rpc_admin_cms
+
 api:
   openImApiPort: [ 10000 ]
+cmsapi:
+  openImCmsApiPort: [ 8000 ]
 sdk:
   openImSdkWsPort: [ 30000 ]
 
@@ -69,17 +86,33 @@ credential:
     bucket: echat-1302656840
     secretID: AKIDGNYVChzIQinu7QEgtNp0hnNgqcV8vZTC
     secretKey: kz15vW83qM6dBUWIq681eBZA0c0vlIbe
-
+  minio:
+    bucket: openim
+    location: us-east-1
+    endpoint: http://127.0.0.1:9000
+    accessKeyID: minioadmin
+    secretAccessKey: minioadmin
 
 rpcport:
   openImUserPort: [ 10100 ]
   openImFriendPort: [ 10200 ]
-  openImOfflineMessagePort: [ 10300]
+  openImOfflineMessagePort: [ 10300 ]
   openImOnlineRelayPort: [ 10400 ]
-  openImGroupPort: [ 10500  ]
+  openImGroupPort: [ 10500 ]
   openImAuthPort: [ 10600 ]
   openImPushPort: [ 10700 ]
-
+  openImStatisticsPort: [ 10800 ]
+  openImMessageCmsPort: [ 10900 ]
+  openImAdminCmsPort: [ 11000 ]
+  c2c:
+    callbackBeforeSendMsg:
+      switch: false
+      timeoutStrategy: 1 #1:send
+    callbackAfterSendMsg:
+      switch: false
+  state:
+    stateChange:
+      switch: false
 
 rpcregistername:
   openImUserName: User
@@ -89,6 +122,9 @@ rpcregistername:
   openImOnlineMessageRelayName: OnlineMessageRelay
   openImGroupName: Group
   openImAuthName: Auth
+  OpenImStatisticsName: Statistics
+  OpenImMessageCMSName: MessageCMS
+  openImAdminCMSName: AdminCMS
 
 log:
   storageLocation: ../logs/
@@ -125,8 +161,8 @@ push:
     pushUrl: "https://api.jpush.cn/v3/push"
     pushIntent: "intent:#Intent;component=io.openim.app.enterprisechat/io.openim.app.enterprisechat.MainActivity;end"
 manager:
-  appManagerUid: ["openIM123456","openIM654321"]
-  secrets: ["openIM1","openIM2"]
+  appManagerUid: [ "openIM123456","openIM654321", "openIM333", "openIMAdmin"]
+  secrets: [ "openIM1","openIM2", "openIM333", "openIMAdmin"]
 
 secret: tuoyun
 
@@ -139,10 +175,281 @@ tokenpolicy:
   accessExpire: 7
 
 messagecallback:
-  callbackSwitch: false
   callbackUrl: "http://www.xxx.com/msg/judge"
   #TimeOut use second as unit
   callbackTimeOut: 10
+messagejudge:
+  isJudgeFriend: true
+#  c2c:
+#    callbackBeforeSendMsg:
+#      switch: false
+#      timeoutStrategy: 1 #1:send
+#    callbackAfterSendMsg:
+#      switch: false
+#  state:
+#    stateChange:
+#      switch: false
+
+iospush:
+  pushSound: "xxx"
+  badgeCount: true
+
+notification:
+  groupCreated:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: true
+      title: "create group title" # xx create the group
+      desc: "create group desc"
+      ext: "create group ext"
+    defaultTips:
+      tips: "create the group"  # xx create the group
+
+  groupInfoSet:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: false
+      title: "groupInfoSet title"
+      desc: "groupInfoSet desc"
+      ext: "groupInfoSet ext"
+    defaultTips:
+      tips: "modified the group profile"  # group info changed by xx
+
+  joinGroupApplication:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: false
+      title: "joinGroupApplication title"
+      desc: "joinGroupApplication desc"
+      ext: "joinGroupApplication ext"
+    defaultTips:
+      tips: "apply to join the group"  # group info changed by xx
+
+  memberQuit:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: false
+      title: "memberQuit title"
+      desc: "memberQuit desc"
+      ext: "memberQuit ext"
+    defaultTips:
+      tips: "quit group chat"  # group info changed by xx
+
+  groupApplicationAccepted:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: true
+    offlinePush:
+      switch: false
+      title: "groupApplicationAccepted title"
+      desc: "groupApplicationAccepted desc"
+      ext: "groupApplicationAccepted ext"
+    defaultTips:
+      tips: "was allowed to join the group"  # group info changed by xx
+
+  groupApplicationRejected:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: false
+      title: " title"
+      desc: " desc"
+      ext: " ext"
+    defaultTips:
+      tips: "was rejected into the group"  # group info changed by xx
+
+  groupOwnerTransferred:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: false
+      title: "groupOwnerTransferred title"
+      desc: "groupOwnerTransferred desc"
+      ext: "groupOwnerTransferred ext"
+    defaultTips:
+      tips: "become a new group owner"  # group info changed by xx
+
+  memberKicked:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: false
+      title: "memberKicked title"
+      desc: "memberKicked desc"
+      ext: "memberKicked ext"
+    defaultTips:
+      tips: "was kicked out of the group"  # group info changed by xx
+
+  memberInvited:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: false
+      title: "memberInvited title"
+      desc: "memberInvited desc"
+      ext: "memberInvited ext"
+    defaultTips:
+      tips: "was invited into the group"  # group info changed by xx
+
+  memberEnter:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: false
+      title: "memberEnter title"
+      desc: "memberEnter desc"
+      ext: "memberEnter ext"
+    defaultTips:
+      tips: "entered the group"  # group info changed by xx
+
+  #############################friend#################################
+
+  friendApplicationAdded:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Somebody applies to add you as a friend"
+      desc: "Somebody applies to add you as a friend"
+      ext: "Somebody applies to add you as a friend"
+    defaultTips:
+      tips: "I applies to add you as a friend"  #
+
+  friendApplicationApproved:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Someone applies to add your friend application"
+      desc: "Someone applies to add your friend application"
+      ext: "Someone applies to add your friend application"
+    defaultTips:
+      tips: "I applies to add your friend application"  #
+
+
+  friendApplicationRejected:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Someone rejected your friend application"
+      desc: "Someone rejected your friend application"
+      ext: "Someone rejected your friend application"
+    defaultTips:
+      tips: "I rejected your friend application"  #
+
+
+
+
+
+  friendAdded:
+    conversation:
+      reliabilityLevel: 3
+      unreadCount: true
+    offlinePush:
+      switch: true
+      title: "We have become friends"
+      desc: "We have become friends"
+      ext: "We have become friends"
+    defaultTips:
+      tips: "We have become friends"  #
+
+
+
+  friendDeleted:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Deleted a friend"
+      desc: "Deleted a friend"
+      ext: "Deleted a friend"
+    defaultTips:
+      tips: "Deleted a friend"  #
+
+
+  friendRemarkSet:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Your friend's profile has been changed"
+      desc: "Your friend's profile has been changed"
+      ext: "Your friend's profile has been changed"
+    defaultTips:
+      tips: "Your friend's profile has been changed"  #
+
+
+
+  blackAdded:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Blocked a user"
+      desc: "Blocked a user"
+      ext: "Blocked a user"
+    defaultTips:
+      tips: "Blocked a user"  #
+
+
+  blackDeleted:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Remove a blocked user"
+      desc: "Remove a blocked user"
+      ext: "Remove a blocked user"
+    defaultTips:
+      tips: "Remove a blocked user"
+
+  #####################user#########################
+  userInfoUpdated:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+    offlinePush:
+      switch: true
+      title: "Remove a blocked user"
+      desc: "Remove a blocked user"
+      ext: "Remove a blocked user"
+    defaultTips:
+      tips: "Remove a blocked user"
+
+  #####################conversation#########################
+  conversationOptUpdate:
+    conversation:
+      reliabilityLevel: 2
+      unreadCount: false
+      offlinePush:
+        switch: true
+        title: "conversation opt update"
+        desc: "conversation opt update"
+        ext: "conversation opt update"
+      defaultTips:
+        tips: "conversation opt update"
+
 
 
 #---------------demo configuration---------------------#
@@ -156,11 +463,14 @@ demo:
     signName: OpenIM Corporation
     verificationCodeTemplateCode: SMS_2268101641
   superCode: 666666
+  #  second
+  codeTTL: 60
   mail:
     title: "openIM"
     senderMail: "1765567899@qq.com"
     senderAuthorizationCode: "1gxyausfoevlzbfag"
     smtpAddr: "smtp.qq.com"
     smtpPort: 25
+
 
 

@@ -1,10 +1,14 @@
 package config
 
 import (
-	"gopkg.in/yaml.v3"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
+
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -32,6 +36,13 @@ type config struct {
 			SecretID  string `yaml:"secretID"`
 			SecretKey string `yaml:"secretKey"`
 		}
+		Minio struct {
+			Bucket          string `yaml:"bucket"`
+			Location        string `yaml:"location"`
+			Endpoint        string `yaml:"endpoint"`
+			AccessKeyID     string `yaml:"accessKeyID"`
+			SecretAccessKey string `yaml:"secretAccessKey"`
+		} `yaml:"minio"`
 	}
 
 	Mysql struct {
@@ -73,6 +84,7 @@ type config struct {
 		RpcGetTokenPort       []int `yaml:"rpcGetTokenPort"`
 	}
 	RpcRegisterName struct {
+		OpenImStatisticsName         string `yaml:"OpenImStatisticsName"`
 		OpenImUserName               string `yaml:"openImUserName"`
 		OpenImFriendName             string `yaml:"openImFriendName"`
 		OpenImOfflineMessageName     string `yaml:"openImOfflineMessageName"`
@@ -80,6 +92,8 @@ type config struct {
 		OpenImOnlineMessageRelayName string `yaml:"openImOnlineMessageRelayName"`
 		OpenImGroupName              string `yaml:"openImGroupName"`
 		OpenImAuthName               string `yaml:"openImAuthName"`
+		OpenImMessageCMSName         string `yaml:"openImMessageCMSName"`
+		OpenImAdminCMSName           string `yaml:"openImAdminCMSName"`
 	}
 	Etcd struct {
 		EtcdSchema string   `yaml:"etcdSchema"`
@@ -122,6 +136,7 @@ type config struct {
 			AppKey       string `yaml:"appKey"`
 			MasterSecret string `yaml:"masterSecret"`
 			PushUrl      string `yaml:"pushUrl"`
+			PushIntent   string `yaml:"pushIntent"`
 		}
 	}
 	Manager struct {
@@ -144,19 +159,173 @@ type config struct {
 		}
 	}
 	Secret           string `yaml:"secret"`
-	MultiLoginPolicy struct {
-		OnlyOneTerminalAccess                                  bool `yaml:"onlyOneTerminalAccess"`
-		MobileAndPCTerminalAccessButOtherTerminalKickEachOther bool `yaml:"mobileAndPCTerminalAccessButOtherTerminalKickEachOther"`
-		AllTerminalAccess                                      bool `yaml:"allTerminalAccess"`
-	}
-	TokenPolicy struct {
+	MultiLoginPolicy int    `yaml:"multiloginpolicy"`
+	TokenPolicy      struct {
 		AccessSecret string `yaml:"accessSecret"`
 		AccessExpire int64  `yaml:"accessExpire"`
 	}
 	MessageCallBack struct {
-		CallbackSwitch bool   `yaml:"callbackSwitch"`
-		CallbackUrl    string `yaml:"callbackUrl"`
+		CallbackSwitch  bool   `yaml:"callbackSwitch"`
+		CallbackUrl     string `yaml:"callbackUrl"`
+		CallBackTimeOut int    `yaml:"callbackTimeOut"`
 	}
+	MessageJudge struct {
+		IsJudgeFriend bool `yaml:"isJudgeFriend"`
+	}
+	IOSPush struct {
+		PushSound  string `yaml:"pushSound"`
+		BadgeCount bool   `yaml:"badgeCount"`
+	}
+	Notification struct {
+		///////////////////////group/////////////////////////////
+		GroupCreated struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"groupCreated"`
+
+		GroupInfoSet struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"groupInfoSet"`
+
+		JoinGroupApplication struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"joinGroupApplication"`
+
+		MemberQuit struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"memberQuit"`
+
+		GroupApplicationAccepted struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"groupApplicationAccepted"`
+
+		GroupApplicationRejected struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"groupApplicationRejected"`
+
+		GroupOwnerTransferred struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"groupOwnerTransferred"`
+
+		MemberKicked struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"memberKicked"`
+
+		MemberInvited struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"memberInvited"`
+
+		MemberEnter struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"memberEnter"`
+		////////////////////////user///////////////////////
+		UserInfoUpdated struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"userInfoUpdated"`
+
+		//////////////////////friend///////////////////////
+		FriendApplication struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"friendApplicationAdded"`
+		FriendApplicationApproved struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"friendApplicationApproved"`
+
+		FriendApplicationRejected struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"friendApplicationRejected"`
+
+		FriendAdded struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"friendAdded"`
+
+		FriendDeleted struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"friendDeleted"`
+		FriendRemarkSet struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"friendRemarkSet"`
+		BlackAdded struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"blackAdded"`
+		BlackDeleted struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"blackDeleted"`
+		ConversationOptUpdate struct {
+			Conversation PConversation `yaml:"conversation"`
+			OfflinePush  POfflinePush  `yaml:"offlinePush"`
+			DefaultTips  PDefaultTips  `yaml:"defaultTips"`
+		} `yaml:"conversationOptUpdate"`
+	}
+	Demo struct {
+		Port         []int `yaml:"openImDemoPort"`
+		AliSMSVerify struct {
+			AccessKeyID                  string `yaml:"accessKeyId"`
+			AccessKeySecret              string `yaml:"accessKeySecret"`
+			SignName                     string `yaml:"signName"`
+			VerificationCodeTemplateCode string `yaml:"verificationCodeTemplateCode"`
+		}
+		SuperCode string `yaml:"superCode"`
+		CodeTTL   int    `yaml:"codeTTL"`
+		Mail      struct {
+			Title                   string `yaml:"title"`
+			SenderMail              string `yaml:"senderMail"`
+			SenderAuthorizationCode string `yaml:"senderAuthorizationCode"`
+			SmtpAddr                string `yaml:"smtpAddr"`
+			SmtpPort                int    `yaml:"smtpPort"`
+		}
+	}
+}
+type PConversation struct {
+	ReliabilityLevel int  `yaml:"reliabilityLevel"`
+	UnreadCount      bool `yaml:"unreadCount"`
+}
+
+type POfflinePush struct {
+	PushSwitch bool   `yaml:"switch"`
+	Title      string `yaml:"title"`
+	Desc       string `yaml:"desc"`
+	Ext        string `yaml:"ext"`
+}
+type PDefaultTips struct {
+	Tips string `yaml:"tips"`
 }
 
 func init() {
@@ -164,12 +333,23 @@ func init() {
 	//bytes, err := ioutil.ReadFile(path + "/config/config.yaml")
 	// if we cd Open-IM-Server/src/utils and run go test
 	// it will panic cannot find config/config.yaml
-	bytes, err := ioutil.ReadFile(Root + "/config/config.yaml")
-	if err != nil {
-		panic(err)
-	}
-	if err = yaml.Unmarshal(bytes, &Config); err != nil {
-		panic(err)
+
+	cfgName := os.Getenv("CONFIG_NAME")
+	if len(cfgName) == 0 {
+		cfgName = Root + "/config/config.yaml"
 	}
 
+	viper.SetConfigFile(cfgName)
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	bytes, err := ioutil.ReadFile(cfgName)
+	if err != nil {
+		panic(err.Error())
+	}
+	if err = yaml.Unmarshal(bytes, &Config); err != nil {
+		panic(err.Error())
+	}
+	fmt.Println("load config: ", Config)
 }
