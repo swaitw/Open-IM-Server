@@ -36,7 +36,7 @@ ALL_TOOLS ?= $(ANALYSIS_TOOLS) $(GENERATION_TOOLS) $(TEST_TOOLS) $(VERSION_CONTR
 
 ## tools.install: Install a must tools
 .PHONY: tools.install
-tools.install: $(addprefix tools.install., $(BUILD_TOOLS))
+tools.install: $(addprefix tools.verify., $(BUILD_TOOLS))
  
 ## tools.install-all: Install all tools
 .PHONY: tools.install-all
